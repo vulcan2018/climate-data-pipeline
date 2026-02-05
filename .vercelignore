@@ -27,3 +27,6 @@ __pycache__/
 dist/
 build/
 .mypy_cache/
+
+# Ignore pyproject.toml so Vercel uses requirements.txt
+pyproject.toml
