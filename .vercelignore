@@ -1,0 +1,29 @@
+# Ignore markdown files
+*.md
+README.md
+CHANGELOG.md
+docs/*.md
+
+# Ignore tests
+tests/
+.pytest_cache/
+.coverage
+
+# Ignore development files
+.git/
+.github/
+.vscode/
+.idea/
+
+# Ignore data files
+*.nc
+*.zarr/
+data/sample/
+
+# Ignore Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.mypy_cache/
