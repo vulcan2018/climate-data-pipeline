@@ -11,7 +11,7 @@ from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 app = FastAPI(
     title="Climate Data Pipeline API",
@@ -63,21 +63,9 @@ app.add_middleware(
 # ============== Root & Info ==============
 
 @app.get("/", include_in_schema=False)
-async def root() -> dict:
-    """Root endpoint with API information."""
-    return {
-        "name": "Climate Data Pipeline API",
-        "version": "1.0.0",
-        "description": "REST API for climate data processing and access",
-        "documentation": "/docs",
-        "openapi": "/openapi.json",
-        "health": "/health",
-        "endpoints": {
-            "datasets": "/api/v1/data/datasets",
-            "metrics": "/api/v1/metrics",
-        },
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+async def root():
+    """Redirect to API documentation."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/api/v1/info")
