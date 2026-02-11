@@ -1,0 +1,4 @@
+# Minimal requirements for Vercel serverless API
+# The demo API returns sample data - no heavy packages needed
+
+fastapi>=0.100.0
