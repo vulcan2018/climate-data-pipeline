@@ -2,6 +2,14 @@
 
 Python data processing pipeline for climate variables with NetCDF/Zarr support, pre-calculated metrics, and FastAPI endpoints.
 
+## Live Demo
+
+**[https://climate-data-pipeline.vercel.app](https://climate-data-pipeline.vercel.app)** - API documentation and endpoints
+
+See also:
+- [ARCO Demo](https://arco-demo.vercel.app) - Interactive demonstration
+- [Climate Viz Frontend](https://climate-viz-frontend.vercel.app) - Data visualisation
+
 ## Features
 
 - **Data Ingestion**: Read NetCDF files with Xarray, lazy loading with Dask
