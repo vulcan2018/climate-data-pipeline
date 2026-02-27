@@ -8,8 +8,41 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from datetime import datetime, timezone
 from typing import Annotated, Literal
+import math
 
 from fastapi import FastAPI, HTTPException, Query
+
+
+def generate_location_aware_temperature(lat: float, lon: float, month: int) -> float:
+    """
+    Generate realistic temperature (in Kelvin) based on location and month.
+    - Equator: ~300K (27C), Poles: ~250K (-23C)
+    - Seasonal variation: +/- 15K depending on hemisphere and month
+    - Small longitudinal variation for realism
+    """
+    # Base temperature: warmer at equator, colder at poles
+    # Uses cosine of latitude for smooth transition
+    lat_rad = math.radians(lat)
+    base_temp = 300 - 25 * (1 - math.cos(lat_rad))  # 275K at poles, 300K at equator
+
+    # Seasonal variation (Northern hemisphere: warm Jun-Aug, cold Dec-Feb)
+    # Southern hemisphere is opposite
+    seasonal_phase = (month - 1) / 12 * 2 * math.pi  # 0 to 2pi over the year
+    if lat >= 0:
+        # Northern hemisphere: peak in July (month 7)
+        seasonal_offset = math.sin(seasonal_phase - math.pi / 2)  # Peak at month ~7
+    else:
+        # Southern hemisphere: peak in January (month 1)
+        seasonal_offset = math.sin(seasonal_phase + math.pi / 2)
+
+    # Seasonal amplitude increases with latitude (minimal at equator)
+    seasonal_amplitude = 15 * abs(math.sin(lat_rad))
+    seasonal_temp = seasonal_amplitude * seasonal_offset
+
+    # Small longitudinal variation (continental vs oceanic effect)
+    lon_variation = 2 * math.sin(math.radians(lon) * 2)
+
+    return round(base_temp + seasonal_temp + lon_variation, 1)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -196,20 +229,33 @@ async def get_point_data(
     """Extract time series data at a specific point."""
     if dataset_id not in SAMPLE_DATASETS:
         raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset_id}")
+
+    # Parse year from start_date or default to 2024
+    year = 2024
+    if start_date:
+        try:
+            year = int(start_date.split("-")[0])
+        except (ValueError, IndexError):
+            pass
+
+    # Generate location-aware monthly temperatures for the year
+    times = [f"{year}-{m:02d}-01" for m in range(1, 13)]
+    values = [generate_location_aware_temperature(lat, lon, m) for m in range(1, 13)]
+
     return {
         "dataset": dataset_id,
         "location": {"lat": lat, "lon": lon},
         "time_range": {
-            "start": start_date or "2020-01-01",
-            "end": end_date or "2020-12-31",
+            "start": start_date or f"{year}-01-01",
+            "end": end_date or f"{year}-12-31",
         },
         "variable": SAMPLE_DATASETS[dataset_id]["variable"],
         "units": SAMPLE_DATASETS[dataset_id]["units"],
         "data": {
-            "times": ["2020-01-01", "2020-02-01", "2020-03-01"],
-            "values": [280.5, 282.3, 285.1],
+            "times": times,
+            "values": values,
         },
-        "note": "Sample data - connect to actual data store for real values",
+        "note": "Location-aware sample data based on lat/lon and seasonal patterns",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
